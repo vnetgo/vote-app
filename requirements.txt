@@ -1,0 +1,8 @@
+Flask
+Flask-SQLAlchemy
+mysqlclient
+openpyxl # For handling Excel files on the backend if needed
+Flask-Login # For user session management
+Flask-WTF # For forms, if we add them
+email-validator # Dependency for Flask-WTF email validation
+gunicorn # WSGI HTTP Server for UNIX (used in Docker for production)

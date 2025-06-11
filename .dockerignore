@@ -1,0 +1,41 @@
+# Git
+.git
+.gitignore
+
+# Python virtual environment
+venv
+.venv
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE and editor specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Local instance/database files (if any, e.g. SQLite)
+*.sqlite3
+instance/
+
+# Test files (if you have a separate test directory)
+# tests/
+
+# Coverage reports
+.coverage
+htmlcov/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Original static HTML (if not needed in final image)
+# votes.html

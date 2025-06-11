@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel投票系统 - 多列展示</title>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2980, #26d0ce);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(to right, #1a2980, #26d0ce);
+            color: white;
+            padding: 30px 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        header p {
+            font-size: 1.2rem;
+            max-width: 700px;
+            margin: 0 auto;
+            opacity: 0.9;
+        }
+        
+        .header-icon {
+            position: absolute;
+            font-size: 120px;
+            opacity: 0.1;
+            top: 20px;
+            right: 30px;
+        }
+        
+        .content {
+            display: flex;
+            min-height: 500px;
+        }
+        
+        .import-section {
+            flex: 1;
+            padding: 30px;
+            background: #f8f9fa;
+            border-right: 1px solid #e0e0e0;
+            min-width: 350px;
+        }
+        
+        .voting-section {
+            flex: 2;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            overflow: auto;
+        }
+        
+        .section-title {
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            color: #1a2980;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #1a2980;
+            display: inline-block;
+        }
+        
+        .upload-area {
+            border: 3px dashed #1a2980;
+            border-radius: 15px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #fff;
+            margin-bottom: 25px;
+        }
+        
+        .upload-area:hover {
+            background: #e3f2fd;
+            border-color: #26d0ce;
+        }
+        
+        .upload-icon {
+            font-size: 60px;
+            color: #1a2980;
+            margin-bottom: 20px;
+        }
+        
+        .upload-text {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .import-settings {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .setting-group {
+            margin: 15px 0;
+        }
+        
+        .setting-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #1a2980;
+        }
+        
+        .setting-group input, .setting-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .setting-group input:focus, .setting-group select:focus {
+            border-color: #26d0ce;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(38, 208, 206, 0.2);
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 25px;
+            background: #1a2980;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            margin: 10px 5px;
+        }
+        
+        .btn:hover {
+            background: #26d0ce;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-success {
+            background: #28a745;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .btn-group {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        
+        .preview {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .preview h3 {
+            margin-bottom: 15px;
+            color: #1a2980;
+        }
+        
+        .preview-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+        }
+        
+        .preview-item:last-child {
+            border-bottom: none;
+        }
+        
+        .preview-item .item-id {
+            background: #1a2980;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        
+        .voting-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        
+        .bulk-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .voting-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        .voting-table th {
+            background: linear-gradient(to right, #1a2980, #26d0ce);
+            color: white;
+            padding: 16px 15px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+        }
+        
+        .voting-table td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .voting-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .voting-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .voting-options {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .vote-option {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .vote-option input {
+            margin-right: 5px;
+            cursor: pointer;
+        }
+        
+        .vote-option label {
+            cursor: pointer;
+        }
+        
+        .agree { color: #28a745; }
+        .disagree { color: #dc3545; }
+        .abstain { color: #6c757d; }
+        
+        .submit-section {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .status-bar {
+            padding: 15px;
+            background: #e9f7ef;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: center;
+            font-weight: 500;
+            color: #28a745;
+            border: 1px solid #b7efc5;
+            display: none;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: white;
+            background: rgba(0, 0, 0, 0.7);
+            margin-top: 30px;
+            border-radius: 0 0 20px 20px;
+        }
+        
+        .more-btn {
+            background: #26d0ce;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 6px 12px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .more-btn:hover {
+            background: #1a2980;
+            transform: translateY(-2px);
+        }
+        
+        .detail-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 900px;
+            max-height: 90vh;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+            animation: modalOpen 0.4s ease;
+        }
+        
+        @keyframes modalOpen {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        .modal-header {
+            background: linear-gradient(to right, #1a2980, #26d0ce);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h3 {
+            font-size: 1.5rem;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.8rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .close-btn:hover {
+            transform: rotate(90deg);
+        }
+        
+        .modal-body {
+            padding: 25px;
+            overflow-y: auto;
+            max-height: 70vh;
+        }
+        
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .detail-table th {
+            background: #f1f8ff;
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 2px solid #ddd;
+        }
+        
+        .detail-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .detail-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .detail-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .display-col-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .col-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .col-checkbox input {
+            margin: 0;
+        }
+        
+        .col-checkbox label {
+            font-size: 0.95rem;
+            color: #444;
+        }
+        
+        @media (max-width: 1100px) {
+            .content {
+                flex-direction: column;
+            }
+            
+            .import-section {
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
+            }
+            
+            .bulk-actions {
+                flex-wrap: wrap;
+            }
+            
+            .voting-options {
+                flex-wrap: wrap;
+            }
+            
+            .voting-table {
+                min-width: 800px;
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <i class="fas fa-file-excel header-icon"></i>
+            <h1>Excel投票系统 - 多列展示</h1>
+            <p>支持多列数据展示、批量投票操作和详细数据查看</p>
+        </header>
+        
+        <div class="content">
+            <div class="import-section">
+                <h2 class="section-title">数据导入设置</h2>
+                
+                <div class="upload-area" id="dropArea">
+                    <i class="fas fa-file-excel upload-icon"></i>
+                    <p class="upload-text">点击或拖拽Excel文件到此处</p>
+                    <p class="text-muted">支持.xlsx和.xls格式</p>
+                    <button class="btn"><i class="fas fa-upload"></i> 选择文件</button>
+                    <input type="file" id="fileInput" class="file-input" accept=".xlsx, .xls">
+                </div>
+                
+                <div class="import-settings">
+                    <div class="setting-group">
+                        <label for="startRow">起始行号（跳过标题行）</label>
+                        <input type="number" id="startRow" min="1" value="2" placeholder="输入起始行号">
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label for="colRange">列范围 (例如: A-F)</label>
+                        <input type="text" id="colRange" placeholder="输入列范围" value="A-F">
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label>选择展示列</label>
+                        <div class="display-col-group" id="displayColGroup">
+                            <!-- 列选择器将在这里动态生成 -->
+                            <p>导入Excel后显示列选项</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="btn-group">
+                    <button class="btn" id="importBtn" disabled><i class="fas fa-file-import"></i> 导入数据</button>
+                    <button class="btn btn-danger" id="resetBtn"><i class="fas fa-trash-alt"></i> 重置</button>
+                </div>
+                
+                <div class="preview">
+                    <h3>数据预览</h3>
+                    <div id="previewContent">
+                        <p class="preview-placeholder">导入Excel文件后，此处将显示数据预览</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="voting-section">
+                <h2 class="section-title">投票区域</h2>
+                
+                <div class="voting-controls">
+                    <div class="bulk-actions">
+                        <button class="btn btn-success" id="allAgreeBtn" disabled><i class="fas fa-check-circle"></i> 全部同意</button>
+                        <button class="btn btn-danger" id="allDisagreeBtn" disabled><i class="fas fa-times-circle"></i> 全部不同意</button>
+                        <button class="btn" id="allAbstainBtn" disabled><i class="fas fa-minus-circle"></i> 全部弃权</button>
+                    </div>
+                    
+                    <div class="stats">
+                        <span id="voteStats">0/0 项已投票</span>
+                    </div>
+                </div>
+                
+                <div class="table-container" style="overflow-x: auto;">
+                    <table class="voting-table" id="votingTable">
+                        <thead id="votingTableHeader">
+                            <tr>
+                                <th width="50px">ID</th>
+                                <th colspan="3" style="text-align: center; padding: 40px;">
+                                    <i class="fas fa-inbox" style="font-size: 50px; color: #ccc; margin-bottom: 15px;"></i>
+                                    <p>请先导入Excel数据以开始投票</p>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="votingTableBody">
+                            <!-- 数据行将在这里动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="submit-section">
+                    <button class="btn" id="submitVoteBtn" disabled><i class="fas fa-paper-plane"></i> 提交投票</button>
+                    <div class="status-bar" id="statusBar">
+                        投票已成功提交！感谢您的参与。
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>© 2023 Excel投票系统 | 支持多列数据展示与批量投票</p>
+        </div>
+    </div>
+    
+    <!-- 详细信息模态框 -->
+    <div class="detail-modal" id="detailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>投票项详细信息</h3>
+                <button class="close-btn" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- 详细信息将在这里动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let excelData = [];
+        let voteData = {};
+        let currentDetailItem = null;
+        let columnHeaders = [];
+        let displayCols = []; // 选择的展示列索引
+        
+        // DOM元素
+        const dropArea = document.getElementById('dropArea');
+        const fileInput = document.getElementById('fileInput');
+        const importBtn = document.getElementById('importBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const previewContent = document.getElementById('previewContent');
+        const votingTableBody = document.getElementById('votingTableBody');
+        const votingTableHeader = document.getElementById('votingTableHeader');
+        const allAgreeBtn = document.getElementById('allAgreeBtn');
+        const allDisagreeBtn = document.getElementById('allDisagreeBtn');
+        const allAbstainBtn = document.getElementById('allAbstainBtn');
+        const submitVoteBtn = document.getElementById('submitVoteBtn');
+        const voteStats = document.getElementById('voteStats');
+        const statusBar = document.getElementById('statusBar');
+        const detailModal = document.getElementById('detailModal');
+        const closeModal = document.getElementById('closeModal');
+        const modalBody = document.getElementById('modalBody');
+        const startRowInput = document.getElementById('startRow');
+        const colRangeInput = document.getElementById('colRange');
+        const displayColGroup = document.getElementById('displayColGroup');
+        
+        // 更新列选择器
+        function updateColSelector() {
+            displayColGroup.innerHTML = '';
+            
+            if (columnHeaders.length === 0) {
+                displayColGroup.innerHTML = '<p>导入Excel后显示列选项</p>';
+                return;
+            }
+            
+            columnHeaders.forEach((header, index) => {
+                const colId = `col-${index}`;
+                const colCheckbox = document.createElement('div');
+                colCheckbox.className = 'col-checkbox';
+                colCheckbox.innerHTML = `
+                    <input type="checkbox" id="${colId}" value="${index}" ${index < 3 ? 'checked' : ''}>
+                    <label for="${colId}">${header} (列${index+1})</label>
+                `;
+                displayColGroup.appendChild(colCheckbox);
+                
+                // 添加事件监听
+                document.getElementById(colId).addEventListener('change', function() {
+                    if (this.checked) {
+                        if (!displayCols.includes(index)) {
+                            displayCols.push(index);
+                        }
+                    } else {
+                        displayCols = displayCols.filter(colIndex => colIndex !== index);
+                    }
+                    
+                    // 如果导入数据后改变列选择，重新生成表格
+                    if (excelData.length > 0) {
+                        generateVotingTable();
+                    }
+                });
+                
+                // 初始化显示列（默认前3列）
+                if (index < 3 && !displayCols.includes(index)) {
+                    displayCols.push(index);
+                }
+            });
+        }
+        
+        // 点击上传区域触发文件选择
+        dropArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+        
+        // 拖拽事件处理
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            dropArea.style.backgroundColor = '#e3f2fd';
+            dropArea.style.borderColor = '#26d0ce';
+        }
+        
+        function unhighlight() {
+            dropArea.style.backgroundColor = '#fff';
+            dropArea.style.borderColor = '#1a2980';
+        }
+        
+        // 文件拖放处理
+        dropArea.addEventListener('drop', handleDrop, false);
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+        
+        // 文件选择处理
+        fileInput.addEventListener('change', function() {
+            handleFiles(this.files);
+        });
+        
+        // 处理Excel文件
+        function handleFiles(files) {
+            if (files.length === 0) return;
+            
+            const file = files[0];
+            if (!file.name.match(/\.(xlsx|xls)$/i)) {
+                alert('请选择Excel文件 (.xlsx 或 .xls)');
+                return;
+            }
+            
+            // 获取导入设置
+            const startRow = parseInt(startRowInput.value) || 2;
+            const colRange = colRangeInput.value || 'A-F';
+            
+            // 读取文件
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    
+                    // 获取第一个工作表
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    
+                    // 转换为JSON
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+                    
+                    if (jsonData.length === 0) {
+                        alert('Excel文件中未找到数据');
+                        return;
+                    }
+                    
+                    // 处理列范围
+                    const [startCol, endCol] = parseColRange(colRange);
+                    
+                    // 处理起始行
+                    const startIndex = Math.max(0, startRow - 1);
+                    
+                    // 获取列标题（使用第一行作为标题）
+                    columnHeaders = [];
+                    if (jsonData.length > 0) {
+                        for (let j = startCol; j <= endCol && j < jsonData[0].length; j++) {
+                            const header = jsonData[0][j] || `列${j+1}`;
+                            columnHeaders.push(header);
+                        }
+                    }
+                    
+                    // 处理数据
+                    excelData = [];
+                    for (let i = startIndex; i < jsonData.length; i++) {
+                        const row = jsonData[i];
+                        if (!row || row.length === 0) continue;
+                        
+                        // 提取指定列范围的数据
+                        const rowData = {};
+                        let hasData = false;
+                        
+                        for (let j = startCol, colIndex = 0; j <= endCol && j < row.length; j++, colIndex++) {
+                            if (row[j] !== undefined && row[j] !== null && row[j] !== '') {
+                                const header = columnHeaders[colIndex] || `列${j+1}`;
+                                rowData[header] = row[j];
+                                hasData = true;
+                            }
+                        }
+                        
+                        if (hasData) {
+                            excelData.push({
+                                id: excelData.length + 1,
+                                data: rowData
+                            });
+                        }
+                    }
+                    
+                    if (excelData.length === 0) {
+                        alert('根据您的设置，没有找到有效数据');
+                        return;
+                    }
+                    
+                    // 初始化投票数据
+                    voteData = {};
+                    excelData.forEach(item => {
+                        voteData[item.id] = null; // 初始未投票
+                    });
+                    
+                    // 更新列选择器
+                    updateColSelector();
+                    
+                    // 显示预览
+                    showPreview();
+                    
+                    // 启用导入按钮
+                    importBtn.disabled = false;
+                    
+                    // 显示状态
+                    statusBar.style.display = 'block';
+                    statusBar.textContent = `成功解析 ${excelData.length} 条数据`;
+                    statusBar.style.backgroundColor = '#e9f7ef';
+                    statusBar.style.color = '#28a745';
+                    statusBar.style.border = '1px solid #b7efc5';
+                    
+                    setTimeout(() => {
+                        statusBar.style.display = 'none';
+                    }, 3000);
+                } catch (error) {
+                    console.error('Excel解析错误:', error);
+                    alert('解析Excel文件时出错，请检查文件格式');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+        
+        // 解析列范围（例如 "A-F"）
+        function parseColRange(range) {
+            // 默认范围
+            let startCol = 0; // A
+            let endCol = 5;   // F
+            
+            if (range) {
+                const parts = range.split('-');
+                if (parts.length === 2) {
+                    const start = parts[0].toUpperCase().charCodeAt(0) - 65;
+                    const end = parts[1].toUpperCase().charCodeAt(0) - 65;
+                    
+                    if (!isNaN(start) && !isNaN(end)) {
+                        startCol = Math.max(0, start);
+                        endCol = Math.max(startCol, end);
+                    }
+                }
+            }
+            
+            return [startCol, endCol];
+        }
+        
+        // 显示数据预览
+        function showPreview() {
+            if (excelData.length === 0) {
+                previewContent.innerHTML = '<p class="preview-placeholder">导入Excel文件后，此处将显示数据预览</p>';
+                return;
+            }
+            
+            let html = '';
+            excelData.slice(0, 5).forEach(item => {
+                const keys = Object.keys(item.data);
+                const firstKey = keys[0];
+                const firstValue = item.data[firstKey] || '无数据';
+                
+                html += `
+                <div class="preview-item">
+                    <div class="item-id">${item.id}</div>
+                    <div>
+                        <div><strong>${firstValue}</strong></div>
+                        <div style="color: #666; font-size: 0.9rem;">${keys.length} 列数据</div>
+                    </div>
+                </div>
+                `;
+            });
+            
+            if (excelData.length > 5) {
+                html += `<div class="preview-item" style="justify-content: center; color: #6c757d;">
+                    以及另外 ${excelData.length - 5} 个项目...
+                </div>`;
+            }
+            
+            previewContent.innerHTML = html;
+        }
+        
+        // 导入数据
+        importBtn.addEventListener('click', importData);
+        
+        function importData() {
+            // 生成投票表格
+            generateVotingTable();
+            
+            // 更新统计
+            updateStats();
+            
+            // 启用投票按钮
+            allAgreeBtn.disabled = false;
+            allDisagreeBtn.disabled = false;
+            allAbstainBtn.disabled = false;
+            submitVoteBtn.disabled = false;
+            
+            // 显示状态
+            statusBar.style.display = 'block';
+            statusBar.textContent = `成功导入 ${excelData.length} 个投票项`;
+            statusBar.style.backgroundColor = '#e9f7ef';
+            statusBar.style.color = '#28a745';
+            statusBar.style.border = '1px solid #b7efc5';
+            
+            // 5秒后隐藏状态栏
+            setTimeout(() => {
+                statusBar.style.display = 'none';
+            }, 5000);
+        }
+        
+        // 生成投票表格
+        function generateVotingTable() {
+            if (excelData.length === 0) return;
+            
+            // 生成表头
+            let headerHtml = '<tr>';
+            headerHtml += '<th width="50px">ID</th>';
+            
+            // 添加选中的列标题
+            displayCols.forEach(colIndex => {
+                if (colIndex < columnHeaders.length) {
+                    headerHtml += `<th>${columnHeaders[colIndex]}</th>`;
+                }
+            });
+            
+            // 添加投票和操作列
+            headerHtml += '<th width="200px">投票</th>';
+            headerHtml += '<th width="100px">操作</th>';
+            headerHtml += '</tr>';
+            
+            votingTableHeader.innerHTML = headerHtml;
+            
+            // 生成数据行
+            let bodyHtml = '';
+            excelData.forEach(item => {
+                bodyHtml += '<tr>';
+                bodyHtml += `<td>${item.id}</td>`;
+                
+                // 添加选中的列数据
+                displayCols.forEach(colIndex => {
+                    const header = columnHeaders[colIndex];
+                    const value = item.data[header] || '无数据';
+                    bodyHtml += `<td>${value}</td>`;
+                });
+                
+                // 添加投票选项
+                bodyHtml += `
+                <td>
+                    <div class="voting-options">
+                        <div class="vote-option agree">
+                            <input type="radio" id="vote_${item.id}_agree" name="vote_${item.id}" value="agree" 
+                                   onchange="setVote(${item.id}, 'agree')">
+                            <label for="vote_${item.id}_agree">同意</label>
+                        </div>
+                        <div class="vote-option disagree">
+                            <input type="radio" id="vote_${item.id}_disagree" name="vote_${item.id}" value="disagree" 
+                                   onchange="setVote(${item.id}, 'disagree')">
+                            <label for="vote_${item.id}_disagree">不同意</label>
+                        </div>
+                        <div class="vote-option abstain">
+                            <input type="radio" id="vote_${item.id}_abstain" name="vote_${item.id}" value="abstain" 
+                                   onchange="setVote(${item.id}, 'abstain')">
+                            <label for="vote_${item.id}_abstain">弃权</label>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <button class="more-btn" onclick="showDetails(${item.id})">
+                        <i class="fas fa-info-circle"></i> 详情
+                    </button>
+                </td>
+                `;
+                bodyHtml += '</tr>';
+            });
+            
+            votingTableBody.innerHTML = bodyHtml;
+        }
+        
+        // 设置投票
+        function setVote(id, vote) {
+            voteData[id] = vote;
+            updateStats();
+        }
+        
+        // 更新投票统计
+        function updateStats() {
+            const total = excelData.length;
+            const voted = Object.values(voteData).filter(v => v !== null).length;
+            voteStats.textContent = `${voted}/${total} 项已投票`;
+            voteStats.style.fontWeight = 'bold';
+            voteStats.style.color = voted === total ? '#28a745' : '#dc3545';
+        }
+        
+        // 显示详细信息
+        function showDetails(id) {
+            const item = excelData.find(i => i.id === id);
+            if (!item) return;
+            
+            currentDetailItem = item;
+            
+            // 生成详细信息表格
+            let html = `
+            <table class="detail-table">
+                <tr>
+                    <th width="30%">字段</th>
+                    <th width="70%">值</th>
+                </tr>
+            `;
+            
+            Object.entries(item.data).forEach(([key, value]) => {
+                html += `
+                <tr>
+                    <td><strong>${key}</strong></td>
+                    <td>${value || '-'}</td>
+                </tr>
+                `;
+            });
+            
+            html += `</table>`;
+            
+            modalBody.innerHTML = html;
+            detailModal.style.display = 'flex';
+        }
+        
+        // 关闭模态框
+        closeModal.addEventListener('click', () => {
+            detailModal.style.display = 'none';
+        });
+        
+        // 点击模态框外部关闭
+        detailModal.addEventListener('click', (e) => {
+            if (e.target === detailModal) {
+                detailModal.style.display = 'none';
+            }
+        });
+        
+        // 批量投票操作
+        allAgreeBtn.addEventListener('click', () => {
+            excelData.forEach(item => {
+                voteData[item.id] = 'agree';
+                document.querySelector(`input[name="vote_${item.id}"][value="agree"]`).checked = true;
+            });
+            updateStats();
+        });
+        
+        allDisagreeBtn.addEventListener('click', () => {
+            excelData.forEach(item => {
+                voteData[item.id] = 'disagree';
+                document.querySelector(`input[name="vote_${item.id}"][value="disagree"]`).checked = true;
+            });
+            updateStats();
+        });
+        
+        allAbstainBtn.addEventListener('click', () => {
+            excelData.forEach(item => {
+                voteData[item.id] = 'abstain';
+                document.querySelector(`input[name="vote_${item.id}"][value="abstain"]`).checked = true;
+            });
+            updateStats();
+        });
+        
+        // 提交投票
+        submitVoteBtn.addEventListener('click', () => {
+            // 检查是否所有项都已投票
+            const allVoted = Object.values(voteData).every(v => v !== null);
+            
+            if (!allVoted) {
+                statusBar.style.display = 'block';
+                statusBar.textContent = '请完成所有项目的投票后再提交！';
+                statusBar.style.backgroundColor = '#f8d7da';
+                statusBar.style.color = '#721c24';
+                statusBar.style.border = '1px solid #f5c6cb';
+                
+                setTimeout(() => {
+                    statusBar.style.display = 'none';
+                }, 3000);
+                return;
+            }
+            
+            // 在实际应用中，这里应该将数据发送到服务器
+            // 现在我们只显示成功消息
+            
+            // 计算投票结果
+            const result = {
+                agree: 0,
+                disagree: 0,
+                abstain: 0
+            };
+            
+            Object.values(voteData).forEach(vote => {
+                result[vote]++;
+            });
+            
+            statusBar.style.display = 'block';
+            statusBar.innerHTML = `
+                <i class="fas fa-check-circle"></i> 投票提交成功！<br>
+                结果统计：同意 ${result.agree} 项 | 不同意 ${result.disagree} 项 | 弃权 ${result.abstain} 项
+            `;
+            statusBar.style.backgroundColor = '#e9f7ef';
+            statusBar.style.color = '#28a745';
+            statusBar.style.border = '1px solid #b7efc5';
+            
+            // 禁用提交按钮防止重复提交
+            submitVoteBtn.disabled = true;
+        });
+        
+        // 重置功能
+        resetBtn.addEventListener('click', () => {
+            excelData = [];
+            voteData = {};
+            columnHeaders = [];
+            displayCols = [];
+            
+            // 重置UI
+            previewContent.innerHTML = '<p class="preview-placeholder">导入Excel文件后，此处将显示数据预览</p>';
+            votingTableHeader.innerHTML = `
+                <tr>
+                    <th width="50px">ID</th>
+                    <th colspan="3" style="text-align: center; padding: 40px;">
+                        <i class="fas fa-inbox" style="font-size: 50px; color: #ccc; margin-bottom: 15px;"></i>
+                        <p>请先导入Excel数据以开始投票</p>
+                    </th>
+                </tr>
+            `;
+            votingTableBody.innerHTML = '';
+            
+            // 重置列选择器
+            displayColGroup.innerHTML = '<p>导入Excel后显示列选项</p>';
+            
+            // 禁用按钮
+            importBtn.disabled = true;
+            allAgreeBtn.disabled = true;
+            allDisagreeBtn.disabled = true;
+            allAbstainBtn.disabled = true;
+            submitVoteBtn.disabled = true;
+            
+            // 更新统计
+            voteStats.textContent = '0/0 项已投票';
+            voteStats.style.color = '#333';
+            
+            // 隐藏状态栏
+            statusBar.style.display = 'none';
+            
+            // 重置文件输入
+            fileInput.value = '';
+            
+            // 重置设置
+            startRowInput.value = '2';
+            colRangeInput.value = 'A-F';
+        });
+    </script>
+</body>
+</html>
