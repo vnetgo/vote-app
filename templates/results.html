@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}投票结果 - 投票系统{% endblock %}
+
+{% block head_extra %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .results-container {
+        padding: 30px;
+    }
+    .results-header h1 {
+        text-align: center;
+        margin-bottom: 30px;
+        color: #1a2980;
+    }
+    #resultsChartContainer {
+        max-width: 800px;
+        margin: 0 auto;
+        background: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+    .results-table {
+        width: 100%;
+        max-width: 600px;
+        margin: 30px auto;
+        border-collapse: collapse;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+    .results-table th, .results-table td {
+        border: 1px solid #ddd;
+        padding: 12px 15px;
+        text-align: left;
+    }
+    .results-table thead th {
+        background-color: #1a2980;
+        color: white;
+        font-weight: 600;
+    }
+    .results-table tbody tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+    .no-results {
+        text-align: center;
+        font-size: 1.2em;
+        color: #777;
+        padding: 40px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="results-container">
+    <div class="results-header">
+        <h1>投票结果</h1>
+    </div>
+
+    {% if votes_data %}
+        <div id="resultsChartContainer">
+            <canvas id="resultsChart"></canvas>
+        </div>
+
+        <table class="results-table">
+            <thead>
+                <tr>
+                    <th>选项名称</th>
+                    <th>票数</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for option_name, vote_count in votes_data %}
+                <tr>
+                    <td>{{ option_name }}</td>
+                    <td>{{ vote_count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    {% else %}
+        <p class="no-results">当前还没有投票结果。</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts_extra %}
+{% if votes_data %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('resultsChart').getContext('2d');
+        const voteLabels = [{% for option_name, _ in votes_data %}"{{ option_name }}",{% endfor %}];
+        const voteCounts = [{% for _, vote_count in votes_data %}{{ vote_count }},{% endfor %}];
+
+        const backgroundColors = [
+            'rgba(26, 41, 128, 0.7)', // #1a2980
+            'rgba(38, 208, 206, 0.7)', // #26d0ce
+            'rgba(255, 159, 64, 0.7)',
+            'rgba(255, 205, 86, 0.7)',
+            'rgba(75, 192, 192, 0.7)',
+            'rgba(54, 162, 235, 0.7)',
+            'rgba(153, 102, 255, 0.7)',
+            'rgba(201, 203, 207, 0.7)'
+        ];
+        const borderColors = [
+            'rgb(26, 41, 128)',
+            'rgb(38, 208, 206)',
+            'rgb(255, 159, 64)',
+            'rgb(255, 205, 86)',
+            'rgb(75, 192, 192)',
+            'rgb(54, 162, 235)',
+            'rgb(153, 102, 255)',
+            'rgb(201, 203, 207)'
+        ];
+
+        new Chart(ctx, {
+            type: 'bar', // or 'pie', 'doughnut'
+            data: {
+                labels: voteLabels,
+                datasets: [{
+                    label: '票数',
+                    data: voteCounts,
+                    backgroundColor: backgroundColors.slice(0, voteLabels.length),
+                    borderColor: borderColors.slice(0, voteLabels.length),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                           stepSize: 1 // Ensure y-axis shows whole numbers for votes
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: '各选项得票统计'
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endif %}
+{% endblock %}
